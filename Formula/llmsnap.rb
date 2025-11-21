@@ -1,5 +1,5 @@
 class Llmsnap < Formula
-  desc "Proxy server for swapping models on vllm, llama.cpp and any other OpenAI API-compatible server"
+  desc "Proxy server for swapping llms on vllm, llama.cpp and other servers"
   homepage "https://github.com/napmany/llmsnap"
   version "0.0.1"
   license "MIT"
@@ -31,6 +31,6 @@ class Llmsnap < Formula
   end
 
   test do
-    system "#{bin}/llmsnap", "--version"
+    system bin/"llmsnap", "--version"
   end
 end
