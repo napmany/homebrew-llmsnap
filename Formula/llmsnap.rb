@@ -1,4 +1,4 @@
-class LLMSnap < Formula
+class Llmsnap < Formula
   desc "Proxy server for swapping models on vllm, llama.cpp and any other OpenAI API-compatible server"
   homepage "https://github.com/napmany/llmsnap"
   version "0.0.1"
