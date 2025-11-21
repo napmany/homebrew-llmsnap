@@ -1,0 +1,84 @@
+
+name: Update Homebrew Formula
+
+# allow for git commit ... 
+permissions:
+  contents: write
+
+on:
+  repository_dispatch:
+    types: [new-release]
+
+  
+jobs:
+  extract-checksums:
+    runs-on: ubuntu-latest
+    outputs:
+      VERSION: ${{ steps.extract_info.outputs.VERSION }}
+      DARWIN_AMD64: ${{ steps.extract.outputs.DARWIN_AMD64 }}
+      DARWIN_ARM64: ${{ steps.extract.outputs.DARWIN_ARM64 }}
+      LINUX_AMD64: ${{ steps.extract.outputs.LINUX_AMD64 }}
+      LINUX_ARM64: ${{ steps.extract.outputs.LINUX_ARM64 }}
+    steps:
+      - name: "Extract release info"
+        id: extract_info
+        run: |
+          TAG_NAME="${{ github.event.client_payload.release.tag_name }}"
+          VERSION="${TAG_NAME#v}" # Remove 'v' prefix if present
+          TXTFILENAME="llmsnap_${VERSION}_checksums.txt"
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "TXTFILENAME=$TXTFILENAME" >> $GITHUB_OUTPUT
+
+      - name: Download checksum.txt
+        id: download_checksum
+        run: |
+          TAG_NAME=${{steps.extract_info.outputs.TAG_NAME}}
+          VERSION=${{steps.extract_info.outputs.VERSION}}
+          curl -L -o llmsnap_${VERSION}_checksums.txt https://github.com/napmany/llmsnap/releases/download/${TAG_NAME}/llmsnap_${VERSION}_checksums.txt
+
+      - name: Extract and set checksums as outputs
+        id: extract
+        run: |
+          VERSION=${{steps.extract_info.outputs.VERSION}}
+          while read -r checksum filename; do
+            IFS='_' read -ra parts <<< "$filename"
+            os=${parts[2]}
+            arch_part=${parts[3]}
+            arch=${arch_part%%.*}
+            os=$(echo "$os" | tr '[:lower:]' '[:upper:]')
+            arch=$(echo "$arch" | tr '[:lower:]' '[:upper:]')
+            var_name="${os}_${arch}"
+            echo "$var_name"="$checksum" >> $GITHUB_OUTPUT
+          done < llmsnap_${VERSION}_checksums.txt
+
+  update-formula:
+    runs-on: ubuntu-latest
+    needs: extract-checksums
+    steps:
+      - uses: actions/checkout@v3
+      - name: Update formula
+        run: |
+          VERSION=${{ needs.extract-checksums.outputs.VERSION }}
+          DARWIN_AMD64_SHA=${{ needs.extract-checksums.outputs.DARWIN_AMD64 }}
+          DARWIN_ARM64_SHA=${{ needs.extract-checksums.outputs.DARWIN_ARM64 }}
+          LINUX_AMD64_SHA=${{ needs.extract-checksums.outputs.LINUX_AMD64 }}
+          LINUX_ARM64_SHA=${{ needs.extract-checksums.outputs.LINUX_ARM64 }}
+
+          sed -i 's/version ".*"/version "'"$VERSION"'"/' Formula/llmsnap.rb
+          sed -i '/darwin_arm64/!b;n;s/sha256 ".*"/sha256 "'"$DARWIN_ARM64_SHA"'"/' Formula/llmsnap.rb
+          sed -i '/darwin_amd64/!b;n;s/sha256 ".*"/sha256 "'"$DARWIN_AMD64_SHA"'"/' Formula/llmsnap.rb
+          sed -i '/linux_arm64/!b;n;s/sha256 ".*"/sha256 "'"$LINUX_ARM64_SHA"'"/' Formula/llmsnap.rb
+          sed -i '/linux_amd64/!b;n;s/sha256 ".*"/sha256 "'"$LINUX_AMD64_SHA"'"/' Formula/llmsnap.rb
+      
+      - name: Set push URL with PAT
+        run: |
+          git remote set-url origin https://x-access-token:${{ secrets.PAT_PUSH_TOKEN }}@github.com/napmany/homebrew-llmsnap
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add Formula/llmsnap.rb
+          git commit -m "Update llmsnap formula to version ${{ needs.extract-checksums.outputs.VERSION }}"
+          git push
