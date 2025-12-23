@@ -1,28 +1,28 @@
 class Llmsnap < Formula
   desc "Proxy server for swapping llms on vllm, llama.cpp and other servers"
   homepage "https://github.com/napmany/llmsnap"
-  version "0.0.2"
+  version "0.0.3"
   license "MIT"
 
   on_macos do
     on_arm do
       url "https://github.com/napmany/llmsnap/releases/download/v#{version}/llmsnap_#{version}_darwin_arm64.tar.gz"
-      sha256 "e0c0e7ff9923dedf0c6106d672fdd71cd82693290b316179ad6a9ad3abfe35fe"
+      sha256 "6375253f8879ebe9ca8145edef26071d626db061e7e83519b9bd31b647899bd4"
     end
     on_intel do
       url "https://github.com/napmany/llmsnap/releases/download/v#{version}/llmsnap_#{version}_darwin_amd64.tar.gz"
-      sha256 "0107136c7fdb407b4142e268a6547b17b25f16853e0137b2ee760321c8823995"
+      sha256 "8b8ad70547793a041f254747d42b143f9a62131ae39d203728865e0adeac0d91"
     end
   end
 
   on_linux do
     on_arm do
       url "https://github.com/napmany/llmsnap/releases/download/v#{version}/llmsnap_#{version}_linux_arm64.tar.gz"
-      sha256 "650c66cf7f8718ebe399247ebbe37350b4846a869fb19f13c1ef67d04feaa424"
+      sha256 "222dd42dd7650f3ef5709a50c985a5dad6a533d5eb0b5e636b477ee2d339da63"
     end
     on_intel do
       url "https://github.com/napmany/llmsnap/releases/download/v#{version}/llmsnap_#{version}_linux_amd64.tar.gz"
-      sha256 "8bc61487ff81dd8791cf4bfd809fb79a9571158a693d55527fff588610d2d6e6"
+      sha256 "204525f9a4cb3b3d05dea54a2d0817668a4b2afd63f7582a399fe66c947e1763"
     end
   end
 
